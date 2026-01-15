@@ -159,3 +159,350 @@
   </script>
 </body>
 </html>
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hungary Life – Alkoholfőzés kalkulátor</title>
+  <style>
+    :root { --r: 14px; }
+    body{
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      margin:0; padding:24px;
+      background:#0b0f19; color:#e8eefc;
+    }
+    .wrap{ max-width:760px; margin:0 auto; }
+    h1{ margin:0 0 10px; font-size:22px; }
+    p{ margin:0 0 18px; opacity:.9; line-height:1.4; }
+    .card{
+      background:#121a2b; border:1px solid #22304f;
+      border-radius:var(--r); padding:18px;
+      box-shadow:0 10px 25px rgba(0,0,0,.25);
+    }
+    .tabs{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+    .tab{
+      padding:10px 12px; border-radius:12px;
+      border:1px solid #2a3b63; background:#0e1526;
+      color:#e8eefc; cursor:pointer; font-weight:700;
+    }
+    .tab.active{ background:#1a2642; border-color:#4a6bff; }
+    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    label{ font-size:13px; opacity:.95; display:block; margin-bottom:6px; }
+    input{
+      width:100%; padding:12px;
+      border-radius:12px; border:1px solid #2a3b63;
+      background:#0e1526; color:#e8eefc; outline:none;
+      box-sizing:border-box; font-size:14px;
+    }
+    input:focus{ border-color:#4a6bff; }
+    .row{ margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    button{
+      padding:12px 14px; border-radius:12px;
+      border:1px solid #2a3b63; background:#1a2642;
+      color:#e8eefc; cursor:pointer; font-weight:800;
+    }
+    button:hover{ filter:brightness(1.08); }
+    .pill{
+      display:flex; align-items:center; gap:8px;
+      padding:10px 12px; border:1px solid #2a3b63;
+      background:#0e1526; border-radius:999px;
+      font-size:13px; opacity:.95;
+    }
+    .result{
+      margin-top:16px; padding:14px;
+      border-radius:12px; background:#0e1526;
+      border:1px dashed #2a3b63;
+    }
+    .big{ font-size:18px; font-weight:900; }
+    .muted{ opacity:.85; font-size:13px; margin-top:8px; line-height:1.35; }
+    .full{ grid-column:1 / -1; }
+    .hint{ margin-top:10px; font-size:12px; opacity:.75; line-height:1.35; }
+    @media (max-width: 620px){
+      .grid{ grid-template-columns:1fr; }
+      button{ flex:1; }
+      .tabs{ gap:8px; }
+      .tab{ flex:1; text-align:center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Hungary Life – Alkoholfőzés kalkulátor</h1>
+    <p>Számold ki mennyi kukoricaliszt kell még a cél %-hoz, vagy hogy meddig jutsz azzal, amid van.</p>
+
+    <div class="card">
+      <div class="tabs">
+        <button class="tab active" id="tabNeed">Még mennyi kell?</button>
+        <button class="tab" id="tabReach">Meddig jutok vele?</button>
+      </div>
+
+      <!-- MODE: NEED ITEMS -->
+      <div id="modeNeed">
+        <div class="grid">
+          <div>
+            <label for="currentPct">Jelenlegi százalék (%)</label>
+            <input id="currentPct" type="number" step="0.1" min="0" max="100" />
+          </div>
+          <div>
+            <label for="currentItems">Eddig betett kukoricaliszt (db)</label>
+            <input id="currentItems" type="number" step="1" min="1" />
+          </div>
+          <div class="full">
+            <label for="targetPct">Cél százalék (%)</label>
+            <input id="targetPct" type="number" step="0.1" min="0" max="100" />
+          </div>
+        </div>
+
+        <div class="row">
+          <button id="calcBtn">Számolás</button>
+          <button id="btn100" title="Cél beállítása 100%-ra">Cél: 100%</button>
+          <button id="resetBtn" title="Alapértékek">Reset</button>
+
+          <div class="pill" title="Kerekítés módja">
+            <input id="roundUp" type="checkbox" style="width:18px;height:18px; margin:0;" />
+            <label for="roundUp" style="margin:0; cursor:pointer;">Kerekítés felfelé</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODE: REACH PCT -->
+      <div id="modeReach" style="display:none;">
+        <div class="grid">
+          <div>
+            <label for="currentPct2">Jelenlegi százalék (%)</label>
+            <input id="currentPct2" type="number" step="0.1" min="0" max="100" />
+          </div>
+          <div>
+            <label for="currentItems2">Eddig betett kukoricaliszt (db)</label>
+            <input id="currentItems2" type="number" step="1" min="1" />
+          </div>
+          <div class="full">
+            <label for="extraItems">Még ennyi kukoricaliszted van (db)</label>
+            <input id="extraItems" type="number" step="1" min="0" />
+          </div>
+        </div>
+
+        <div class="row">
+          <button id="calcBtn2">Számolás</button>
+          <button id="resetBtn2">Reset</button>
+        </div>
+
+        <div class="hint">
+          Tipp: ez akkor pontos, ha a szerveren a %-növekedés végig lineáris (ugyanannyit ad 1 db liszt).
+        </div>
+      </div>
+
+      <div class="result" id="resultBox" aria-live="polite">
+        <div class="big" id="resultMain">Add meg az adatokat, majd nyomd meg: Számolás</div>
+        <div class="muted" id="resultDetail"></div>
+      </div>
+
+      <div class="hint">
+        Mentés: az utolsó beírt értékeket automatikusan megőrzi a böngésző (ugyanazon a telefonon / gépen).
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    const STORE_KEY = "hl_alko_calc_v2";
+
+    function isNum(x){ return Number.isFinite(x); }
+
+    function fmt(n){
+      if (!isNum(n)) return "—";
+      return Number.isInteger(n) ? String(n) : n.toFixed(2);
+    }
+
+    function saveState(){
+      const state = {
+        currentPct: $("currentPct").value,
+        currentItems: $("currentItems").value,
+        targetPct: $("targetPct").value,
+        roundUp: $("roundUp").checked,
+        currentPct2: $("currentPct2").value,
+        currentItems2: $("currentItems2").value,
+        extraItems: $("extraItems").value,
+        mode: $("modeNeed").style.display !== "none" ? "need" : "reach"
+      };
+      localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    }
+
+    function loadState(){
+      try{
+        const raw = localStorage.getItem(STORE_KEY);
+        if(!raw) return false;
+        const s = JSON.parse(raw);
+
+        $("currentPct").value = s.currentPct ?? "16.5";
+        $("currentItems").value = s.currentItems ?? "66";
+        $("targetPct").value = s.targetPct ?? "50";
+        $("roundUp").checked = !!s.roundUp;
+
+        $("currentPct2").value = s.currentPct2 ?? $("currentPct").value;
+        $("currentItems2").value = s.currentItems2 ?? $("currentItems").value;
+        $("extraItems").value = s.extraItems ?? "0";
+
+        if (s.mode === "reach") setMode("reach"); else setMode("need");
+        return true;
+      }catch{
+        return false;
+      }
+    }
+
+    function setMode(mode){
+      const need = mode === "need";
+      $("modeNeed").style.display = need ? "" : "none";
+      $("modeReach").style.display = need ? "none" : "";
+      $("tabNeed").classList.toggle("active", need);
+      $("tabReach").classList.toggle("active", !need);
+      $("resultMain").textContent = "Add meg az adatokat, majd nyomd meg: Számolás";
+      $("resultDetail").textContent = "";
+      saveState();
+    }
+
+    function validatePct(p){ return isNum(p) && p >= 0 && p <= 100; }
+    function validateItems(i){ return isNum(i) && i >= 1; }
+
+    // Mode 1: Need more items to reach target %
+    function calcNeed(){
+      const currentPct = parseFloat($("currentPct").value);
+      const currentItems = parseFloat($("currentItems").value);
+      const targetPct = parseFloat($("targetPct").value);
+      const roundUp = $("roundUp").checked;
+
+      const main = $("resultMain");
+      const detail = $("resultDetail");
+
+      if (!validatePct(currentPct) || !validateItems(currentItems) || !validatePct(targetPct)) {
+        main.textContent = "Hibás adat: százalék 0–100, db pedig minimum 1.";
+        detail.textContent = "";
+        return;
+      }
+
+      if (targetPct <= currentPct) {
+        main.textContent = "A cél % már megvan (vagy alacsonyabb).";
+        detail.textContent = `Jelenleg: ${fmt(currentPct)}%, cél: ${fmt(targetPct)}%.`;
+        return;
+      }
+
+      // Lineáris: currentItems -> currentPct
+      const pctPerItem = currentPct / currentItems; // % / db
+
+      if (pctPerItem <= 0) {
+        main.textContent = "Ebből így nem jön ki arány (0% / db).";
+        detail.textContent = "Ellenőrizd a jelenlegi %-ot és a betett db-ot.";
+        return;
+      }
+
+      const missingPct = targetPct - currentPct;
+      const neededExact = missingPct / pctPerItem;
+      const needed = roundUp ? Math.ceil(neededExact) : neededExact;
+
+      main.textContent = roundUp
+        ? `Még ${fmt(needed)} db kukoricaliszt kell a ${fmt(targetPct)}%-hoz.`
+        : `Még ~${fmt(needed)} db kukoricaliszt kell a ${fmt(targetPct)}%-hoz.`;
+
+      detail.textContent =
+        `1 db ≈ ${fmt(pctPerItem)}% | Hiányzik: ${fmt(missingPct)}% | Számolt: ${fmt(neededExact)} db` +
+        (roundUp ? ` → kerekítve: ${fmt(Math.ceil(neededExact))} db` : "");
+
+      // Szinkron a másik módhoz is (kényelmes)
+      $("currentPct2").value = $("currentPct").value;
+      $("currentItems2").value = $("currentItems").value;
+
+      saveState();
+    }
+
+    // Mode 2: With extra items, what % will I reach?
+    function calcReach(){
+      const currentPct = parseFloat($("currentPct2").value);
+      const currentItems = parseFloat($("currentItems2").value);
+      const extraItems = parseFloat($("extraItems").value);
+
+      const main = $("resultMain");
+      const detail = $("resultDetail");
+
+      if (!validatePct(currentPct) || !validateItems(currentItems) || !isNum(extraItems) || extraItems < 0) {
+        main.textContent = "Hibás adat: százalék 0–100, db minimum 1, extra db minimum 0.";
+        detail.textContent = "";
+        return;
+      }
+
+      const pctPerItem = currentPct / currentItems;
+      if (pctPerItem <= 0) {
+        main.textContent = "Ebből így nem jön ki arány (0% / db).";
+        detail.textContent = "Ellenőrizd a jelenlegi %-ot és a betett db-ot.";
+        return;
+      }
+
+      const addedPct = extraItems * pctPerItem;
+      let newPct = currentPct + addedPct;
+      if (newPct > 100) newPct = 100;
+
+      main.textContent = `Ezzel kb. ${fmt(newPct)}%-ig jutsz el.`;
+      detail.textContent =
+        `1 db ≈ ${fmt(pctPerItem)}% | Plusz: ${fmt(extraItems)} db → +${fmt(addedPct)}% | (100% a plafonként kezelve)`;
+
+      saveState();
+    }
+
+    // Wiring
+    $("calcBtn").addEventListener("click", calcNeed);
+    $("btn100").addEventListener("click", () => { $("targetPct").value = 100; calcNeed(); });
+    $("resetBtn").addEventListener("click", () => {
+      $("currentPct").value = 16.5;
+      $("currentItems").value = 66;
+      $("targetPct").value = 50;
+      $("roundUp").checked = true;
+      $("resultMain").textContent = "Add meg az adatokat, majd nyomd meg: Számolás";
+      $("resultDetail").textContent = "";
+      saveState();
+    });
+
+    $("calcBtn2").addEventListener("click", calcReach);
+    $("resetBtn2").addEventListener("click", () => {
+      $("currentPct2").value = $("currentPct").value || 16.5;
+      $("currentItems2").value = $("currentItems").value || 66;
+      $("extraItems").value = 0;
+      $("resultMain").textContent = "Add meg az adatokat, majd nyomd meg: Számolás";
+      $("resultDetail").textContent = "";
+      saveState();
+    });
+
+    $("tabNeed").addEventListener("click", () => setMode("need"));
+    $("tabReach").addEventListener("click", () => setMode("reach"));
+
+    // Enter = számolás
+    ["currentPct","currentItems","targetPct"].forEach(id=>{
+      $(id).addEventListener("keydown", (e)=>{ if(e.key==="Enter") calcNeed(); });
+      $(id).addEventListener("input", saveState);
+    });
+    ["currentPct2","currentItems2","extraItems"].forEach(id=>{
+      $(id).addEventListener("keydown", (e)=>{ if(e.key==="Enter") calcReach(); });
+      $(id).addEventListener("input", saveState);
+    });
+    $("roundUp").addEventListener("change", () => { saveState(); });
+
+    // Init
+    const loaded = loadState();
+    if (!loaded){
+      // defaultok első nyitásra
+      $("currentPct").value = 16.5;
+      $("currentItems").value = 66;
+      $("targetPct").value = 50;
+      $("roundUp").checked = true;
+
+      $("currentPct2").value = 16.5;
+      $("currentItems2").value = 66;
+      $("extraItems").value = 0;
+
+      saveState();
+    }
+  </script>
+</body>
+</html>
+
+
